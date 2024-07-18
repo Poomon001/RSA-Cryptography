@@ -97,6 +97,7 @@ int32_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m){
 
 int main(void) {
     // P and Q are two large prime numbers
+    // we kept the max bits to be 8 because pq value was becoming too large, resulting in further multiplication to be too large
     const int maxBits = 8;
     const int minBits = 3;
     const int32_t p = get_32bit_prime(maxBits);
