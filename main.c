@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <gmp.h>
+#include <math.h>
 
 int extended_euclidean(int a, int b, int *x, int *y) {
     if (a == 0) {
@@ -39,7 +40,7 @@ int mod_inverse(int a, int m) {
 // x % y = E^-1 % Y
 
 // Function to compute X
-int32_t compute_x(int32_t y, int32_t e) {
+int32_t compute_x(int32_t y, int e) {
     int k = mod_inverse(e, y);
     if (k == -1) return -1;  // Error case
 
@@ -56,7 +57,7 @@ int32_t compute_x(int32_t y, int32_t e) {
 int32_t get_32bit_prime(int bits) {
     gmp_randstate_t state;
     mpz_t prime;
-    unsigned long seed = 12345; // Use a proper random seed in real applications
+    unsigned long seed = 99; // Use a proper random seed in real applications
 
     // Initialize state and prime
     gmp_randinit_default(state);
@@ -79,9 +80,25 @@ int32_t get_32bit_prime(int bits) {
     return (int32_t)result;
 }
 
+int32_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m){
+    uint64_t z = 1;
+    p = p % m; //to ensure that p does not become too large than 32 bits
+    while(e > 0){
+        if ((e & 1) == 1){
+            z = (z * p) % m;
+        }
+        printf("Z: %lld\n", z);
+        printf("e: %lld\n", e);
+        e = e >> 1;
+        p = (p * p) % m;
+    }
+    return (int32_t)z;
+}
+
 int main(void) {
     // P and Q are two large prime numbers
-    const int maxBits = 16;
+    // we kept the max bits to be 8 because pq value was becoming too large, resulting in further multiplication to be too large
+    const int maxBits = 8;
     const int minBits = 3;
     const int32_t p = get_32bit_prime(maxBits);
     const int32_t q = get_32bit_prime(maxBits);
@@ -92,7 +109,7 @@ int main(void) {
     const int randomBits = (rand() % (maxBits - minBits + 1)) + minBits;
     //E is an odd prime number
     // E and (P - 1)*(Q - 1) are relatively prime (meaning they have no prime factors in common)
-    int32_t e;
+    int e;
     do {
         e = get_32bit_prime(randomBits);
     } while (pq % e == 0);
@@ -100,8 +117,18 @@ int main(void) {
     printf("%d, %d, %d, %d\n", p, q, e, pq);
 
     int32_t x = compute_x(pq, e);
-    double d = ((double)(x * pq) + 1) / e;
-    printf("D: %.2f\n", d);
+    // printf("X: %d\n", x);
+    int32_t d = (int32_t)(((x * pq) + 1) / e);
+    printf("D: %d\n", d);
+
+    int32_t t = 199;
+    int32_t c_encrypted = modular_exponentiation(t, e, pq);
+
+    printf("C: %d\n", c_encrypted);
+
+    int32_t t_decrypted = modular_exponentiation(c_encrypted, d, pq);
+
+    printf("T: %d\n", t_decrypted);
 
     return 0;
 }
