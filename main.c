@@ -124,6 +124,16 @@ int32_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m){
     return (int32_t)z;
 }
 
+int32_t montgomery_modular_multiplication(int32_t a, int32_t b, int32_t n) {
+    int32_t m = 1 << 16;
+    int32_t t = a * b;
+    int32_t u = (t + ((t * m) & 0xFFFF) * n) >> 16;
+    if (u >= n) {
+        return u - n;
+    }
+    return u;
+}
+
 int main(void) {
     // P and Q are two large prime numbers
     // we kept the max bits to be 8 because pq value was becoming too large, resulting in further multiplication to be too large
