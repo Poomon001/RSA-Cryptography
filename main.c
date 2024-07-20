@@ -80,6 +80,20 @@ int32_t get_32bit_prime(int bits) {
     return (int32_t)result;
 }
 
+/** With no optimization:
+ * inefficient with exponential operator
+ * Can only support 3 bits input with limited range of t values
+ * **/
+/*
+int32_t bruteforce_rsa_cryptography(int32_t t, int32_t e, int32_t pq) {
+    return (int32_t)pow(t, e) % pq;
+}*/
+
+/** With only modular_exponentiation:
+ * faster with no exponential operator but still have multiplication operator
+ * can only support upto 8 bits input
+ * **/
+/*
 int32_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m){
     uint64_t z = 1;
     p = p % m; //to ensure that p does not become too large than 32 bits
@@ -89,6 +103,21 @@ int32_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m){
         }
         printf("Z: %lld\n", z);
         printf("e: %lld\n", e);
+        e = e >> 1;
+        p = (p * p) % m;
+    }
+    return (int32_t)z;
+}
+ */
+
+/** With modular_exponentiation and montgomery_modular_multiplication: **/
+int32_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m){
+    uint64_t z = 1;
+    p = p % m; //to ensure that p does not become too large than 32 bits
+    while(e > 0){
+        if ((e & 1) == 1){
+            z = (z * p) % m;
+        }
         e = e >> 1;
         p = (p * p) % m;
     }
@@ -121,7 +150,8 @@ int main(void) {
     int32_t d = (int32_t)(((x * pq) + 1) / e);
     printf("D: %d\n", d);
 
-    int32_t t = 199;
+    int32_t t = 133; // Note; The message being encrypted, t, must be less that the modulus, PQ
+
     int32_t c_encrypted = modular_exponentiation(t, e, pq);
 
     printf("C: %d\n", c_encrypted);
