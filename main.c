@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <gmp.h>
 #include <math.h>
+uint64_t montgomery_modular_multiplication(uint64_t z, uint64_t p, uint64_t pq);
 
 int extended_euclidean(int a, int b, int *x, int *y) {
     if (a == 0) {
@@ -112,22 +113,64 @@ int32_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m){
 
 /** With modular_exponentiation and montgomery_modular_multiplication: **/
 int32_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m){
+    uint64_t r = 1 << (uint64_t)log2(m) + 1;
     uint64_t z = 1;
-    p = p % m; //to ensure that p does not become too large than 32 bits
+
+    // p = p % m; //to ensure that p does not become too large than 32 bits
     while(e > 0){
+        uint64_t p_prime = montgomery_modular_multiplication(p, r, m);
         if ((e & 1) == 1){
-            z = (z * p) % m;
+            uint64_t z_prime = montgomery_modular_multiplication(z, r, m);
+            z = montgomery_modular_multiplication(z_prime, p_prime, m);
+            exit(0);
         }
         e = e >> 1;
-        p = (p * p) % m;
+        p = montgomery_modular_multiplication(p_prime, p_prime, m);
     }
     return (int32_t)z;
+}
+
+uint64_t montgomery_modular_multiplication(uint64_t x, uint64_t y, uint64_t M) {
+    uint64_t m_bits = (uint64_t)log2(M) + 1;
+    // x = (x << m_bits) % M;
+    // y = (y << m_bits) % M;
+    // x = 17;
+    // y = 22;
+    printf("X: %lld\n", x);
+    printf("Y: %lld\n", y);
+    // M = 23;
+    uint64_t m = M;
+    uint64_t t = 0;
+    uint64_t n;
+    n = ((t & 1)) ^ ((x & 1) & (y & 1));
+    t = (t + ((x & 1) * y) + (n * M)) >> 1;
+    m = m >> 1;
+    x = x >> 1;
+    // printf("t: %lld\n", t);
+    // printf("n: %lld\n", n);
+    // printf("m: %lld\n", m);
+    while(m > 0){
+        // printf("iteration: %lld\n\n\n\n", m);
+        n = ((t & 1)) ^ ((x & 1) & (y & 1));
+        t = (t + ((x & 1) * y) + (n * M)) >> 1;
+        // printf("1 %lld %lld\n", ((x & 1) * y), x);
+        // printf("2 %lld %lld %lld\n", (n * M), n, M);
+        // printf("n: %lld\n", n);
+        // printf("t: %lld\n", t);
+        x = x >> 1;
+        m = m >> 1;
+    }
+    if (t >= M) {
+        t = t - M;
+    }
+    printf("T: %lld\n", t);
+    return t;
 }
 
 int main(void) {
     // P and Q are two large prime numbers
     // we kept the max bits to be 8 because pq value was becoming too large, resulting in further multiplication to be too large
-    const int maxBits = 8;
+    const int maxBits = 3;
     const int minBits = 3;
     const int32_t p = get_32bit_prime(maxBits);
     const int32_t q = get_32bit_prime(maxBits);
@@ -150,7 +193,7 @@ int main(void) {
     int32_t d = (int32_t)(((x * pq) + 1) / e);
     printf("D: %d\n", d);
 
-    int32_t t = 133; // Note; The message being encrypted, t, must be less that the modulus, PQ
+    int32_t t = 5; // Note; The message being encrypted, t, must be less that the modulus, PQ
 
     int32_t c_encrypted = modular_exponentiation(t, e, pq);
 
