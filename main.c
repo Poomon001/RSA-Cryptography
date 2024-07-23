@@ -6,6 +6,7 @@
 uint64_t montgomery_modular_multiplication(uint64_t z, uint64_t p, uint64_t pq);
 
 int extended_euclidean(int a, int b, int *x, int *y) {
+    printf("a: %d, b: %d\n", a, b);
     if (a == 0) {
         *x = 0;
         *y = 1;
@@ -23,6 +24,7 @@ int extended_euclidean(int a, int b, int *x, int *y) {
 
 // Function to compute modular multiplicative inverse
 int mod_inverse(int a, int m) {
+    printf("a: %d, m: %d\n", a, m);
     int x, y;
     int gcd = extended_euclidean(a, m, &x, &y);
     if (gcd != 1) {
@@ -42,7 +44,7 @@ int mod_inverse(int a, int m) {
 
 // Function to compute X
 int32_t compute_x(int32_t y, int e) {
-    int k = mod_inverse(e, y);
+    uint64_t k = mod_inverse(e, y);
     if (k == -1) return -1;  // Error case
 
     int x = (k * e - 1) / y;
@@ -159,7 +161,7 @@ uint64_t montgomery_modular_multiplication(uint64_t x, uint64_t y, uint64_t M) {
 int main(void) {
     // P and Q are two large prime numbers
     // we kept the max bits to be 8 because pq value was becoming too large, resulting in further multiplication to be too large
-    const int maxBits = 15;
+    const int maxBits = 17;
     const int minBits = 3;
     const uint32_t p = get_32bit_prime(maxBits, 99);
     const int32_t q = get_32bit_prime(maxBits, 5);
@@ -175,12 +177,17 @@ int main(void) {
         e = get_32bit_prime(randomBits, 99);
     } while (phi % e == 0);
 
-    int32_t x = compute_x(phi, e);
-    int32_t d = (int32_t)(((x * phi) + 1) / e);
+    printf("p: %d, q: %d, e: %d, pq: %d, (p-1)(q-1): %d\n", p, q, e, p * q, phi);
 
-    int32_t t = 3212; // Note; The message being encrypted, t, must be less that the modulus, PQ
+    int32_t x = compute_x(phi, e);
+    printf("x: %d\n", x);
+    uint64_t d = (uint64_t)x * phi + 1;
+    d = d / e;
+    // int32_t d = (int32_t)((uint64_t(x * phi) + 1) / e);
+
+    int32_t t = 9; // Note; The message being encrypted, t, must be less that the modulus, PQ
     int32_t pq = p * q;
-    printf("d:%d, p: %d, q: %d, e: %d, pq: %d, (p-1)(q-1): %d\n", d, p, q, e, p * q, phi);
+    printf("d:%llu, p: %d, q: %d, e: %d, pq: %d, (p-1)(q-1): %d\n", d, p, q, e, p * q, phi);
 
     int32_t c_encrypted = modular_exponentiation(t, e, pq);
 
