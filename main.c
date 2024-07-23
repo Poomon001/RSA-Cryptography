@@ -6,7 +6,6 @@
 uint64_t montgomery_modular_multiplication(uint64_t z, uint64_t p, uint64_t pq);
 
 int extended_euclidean(int a, int b, int *x, int *y) {
-    printf("a: %d, b: %d\n", a, b);
     if (a == 0) {
         *x = 0;
         *y = 1;
@@ -24,7 +23,6 @@ int extended_euclidean(int a, int b, int *x, int *y) {
 
 // Function to compute modular multiplicative inverse
 int mod_inverse(int a, int m) {
-    printf("a: %d, m: %d\n", a, m);
     int x, y;
     int gcd = extended_euclidean(a, m, &x, &y);
     if (gcd != 1) {
@@ -177,10 +175,7 @@ int main(void) {
         e = get_32bit_prime(randomBits, 99);
     } while (phi % e == 0);
 
-    printf("p: %d, q: %d, e: %d, pq: %d, (p-1)(q-1): %d\n", p, q, e, p * q, phi);
-
     int32_t x = compute_x(phi, e);
-    printf("x: %d\n", x);
     uint64_t d = (uint64_t)x * phi + 1;
     d = d / e;
     // int32_t d = (int32_t)((uint64_t(x * phi) + 1) / e);
