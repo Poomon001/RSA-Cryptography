@@ -55,10 +55,9 @@ int32_t compute_x(int32_t y, int e) {
     return x;
 }
 
-int32_t get_32bit_prime(int bits) {
+int32_t get_32bit_prime(int bits, unsigned long seed) {
     gmp_randstate_t state;
     mpz_t prime;
-    unsigned long seed = 99; // Use a proper random seed in real applications
 
     // Initialize state and prime
     gmp_randinit_default(state);
@@ -94,52 +93,49 @@ int32_t bruteforce_rsa_cryptography(int32_t t, int32_t e, int32_t pq) {
  * faster with no exponential operator but still have multiplication operator
  * can only support upto 8 bits input
  * **/
-/*
-int32_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m){
-    uint64_t z = 1;
-    p = p % m; //to ensure that p does not become too large than 32 bits
-    while(e > 0){
-        if ((e & 1) == 1){
-            z = (z * p) % m;
-        }
-        printf("Z: %lld\n", z);
-        printf("e: %lld\n", e);
-        e = e >> 1;
-        p = (p * p) % m;
-    }
-    return (int32_t)z;
-}
- */
+//int32_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m){
+//    uint64_t z = 1;
+//    p = p % m; //to ensure that p does not become too large than 32 bits
+//    while(e > 0){
+//        if ((e & 1) == 1){
+//            z = (z * p) % m;
+//        }
+//
+//        e = e >> 1;
+//        p = (p * p) % m;
+//    }
+//    return (int32_t)z;
+//}
 
 /** With modular_exponentiation and montgomery_modular_multiplication: **/
 int32_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m){
-    uint64_t r = 1 << (uint64_t)log2(m) + 1;
+    uint64_t r = 1ULL << ((uint64_t)(log2(m)) + 1);
+    uint64_t r2 = (r * r) % m;
+    printf("r: %lld, r2: %lld\n", r, r2);
     uint64_t z = 1;
 
-    // p = p % m; //to ensure that p does not become too large than 32 bits
+    p = p % m; //to ensure that p does not become too large than 32 bits
     while(e > 0){
-        uint64_t p_prime = montgomery_modular_multiplication(p, r * r, m);
+        printf("e: %lld\n", e);
+        uint64_t p_prime = montgomery_modular_multiplication(p, r2, m);
         if ((e & 1) == 1){
-            uint64_t z_prime = montgomery_modular_multiplication(z, r * r, m);
+            uint64_t z_prime = montgomery_modular_multiplication(z, r2, m);
+//            printf("%lld * %lld mod %lld\n", z, p, m);
             z = montgomery_modular_multiplication(z_prime, p_prime, m);
-            z = montgomery_modular_multiplication(z, r, 1);
+            z = montgomery_modular_multiplication(z, 1, m);
+//            printf("result z: %lld\n", z);
         }
         e = e >> 1;
+//        printf("%lld * %lld mod %lld\n", p, p, m);
         p = montgomery_modular_multiplication(p_prime, p_prime, m);
-        p = montgomery_modular_multiplication(p, r, 1);
+        p = montgomery_modular_multiplication(p, 1, m);
+//        printf("result p: %lld\n", p);
     }
+    printf("\nresult: %lld\n", z);
     return (int32_t)z;
 }
 
 uint64_t montgomery_modular_multiplication(uint64_t x, uint64_t y, uint64_t M) {
-    uint64_t m_bits = (uint64_t)log2(M) + 1;
-    // x = (x << m_bits) % M;
-    // y = (y << m_bits) % M;
-    // x = 17;
-    // y = 22;
-    printf("X: %lld\n", x);
-    printf("Y: %lld\n", y);
-    // M = 23;
     uint64_t m = M;
     uint64_t t = 0;
     uint64_t n;
@@ -147,62 +143,67 @@ uint64_t montgomery_modular_multiplication(uint64_t x, uint64_t y, uint64_t M) {
     t = (t + ((x & 1) * y) + (n * M)) >> 1;
     m = m >> 1;
     x = x >> 1;
-    // printf("t: %lld\n", t);
-    // printf("n: %lld\n", n);
-    // printf("m: %lld\n", m);
+
     while(m > 0){
-        // printf("iteration: %lld\n\n\n\n", m);
         n = ((t & 1)) ^ ((x & 1) & (y & 1));
         t = (t + ((x & 1) * y) + (n * M)) >> 1;
-        // printf("1 %lld %lld\n", ((x & 1) * y), x);
-        // printf("2 %lld %lld %lld\n", (n * M), n, M);
-        // printf("n: %lld\n", n);
-        // printf("t: %lld\n", t);
         x = x >> 1;
         m = m >> 1;
     }
     if (t >= M) {
         t = t - M;
     }
-    printf("T: %lld\n", t);
     return t;
 }
 
 int main(void) {
     // P and Q are two large prime numbers
     // we kept the max bits to be 8 because pq value was becoming too large, resulting in further multiplication to be too large
-    const int maxBits = 3;
+    const int maxBits = 15;
     const int minBits = 3;
-    const int32_t p = get_32bit_prime(maxBits);
-    const int32_t q = get_32bit_prime(maxBits);
+    const uint32_t p = get_32bit_prime(maxBits, 99);
+    const int32_t q = get_32bit_prime(maxBits, 5);
 
     //(P - 1)*(Q - 1) is an even number
-    int32_t pq = (p - 1) * (q - 1);
+    int32_t phi = (p - 1) * (q - 1);
     //E > 1 and E < P*Q
     const int randomBits = (rand() % (maxBits - minBits + 1)) + minBits;
     //E is an odd prime number
     // E and (P - 1)*(Q - 1) are relatively prime (meaning they have no prime factors in common)
-    int e;
+    int32_t e;
     do {
-        e = get_32bit_prime(randomBits);
-    } while (pq % e == 0);
+        e = get_32bit_prime(randomBits, 99);
+    } while (phi % e == 0);
 
-    printf("%d, %d, %d, %d\n", p, q, e, pq);
+    int32_t x = compute_x(phi, e);
+    int32_t d = (int32_t)(((x * phi) + 1) / e);
 
-    int32_t x = compute_x(pq, e);
-    // printf("X: %d\n", x);
-    int32_t d = (int32_t)(((x * pq) + 1) / e);
-    printf("D: %d\n", d);
-
-    int32_t t = 5; // Note; The message being encrypted, t, must be less that the modulus, PQ
+    int32_t t = 3212; // Note; The message being encrypted, t, must be less that the modulus, PQ
+    int32_t pq = p * q;
+    printf("d:%d, p: %d, q: %d, e: %d, pq: %d, (p-1)(q-1): %d\n", d, p, q, e, p * q, phi);
 
     int32_t c_encrypted = modular_exponentiation(t, e, pq);
 
-    printf("C: %d\n", c_encrypted);
+    printf("c_encrypted: %d\n", c_encrypted);
 
     int32_t t_decrypted = modular_exponentiation(c_encrypted, d, pq);
 
-    printf("T: %d\n", t_decrypted);
+    printf("t_decrypted: %d\n", t_decrypted);
+
+    /* keep this for now */
+//    int64_t m = p * q;
+//    int64_t r = 1 << (int64_t)(log2(m) + 1);
+//    int64_t r2 = (r * r) % m;
+//    int64_t X = 3333;
+//    int64_t Y = 522;
+//    int64_t a = montgomery_modular_multiplication(X, r2, m);
+//    int64_t b = montgomery_modular_multiplication(Y, r2, m);
+//    int64_t result = montgomery_modular_multiplication(a, b, m);
+//    int64_t final = montgomery_modular_multiplication(result, 1, m); // Convert back from Montgomery form
+//
+//    printf("p * q: %lld\n", m);
+//    printf("result: %lld\n", result);
+//    printf("%lld * %lld mod %lld: %lld\n", X, Y, m, final);
 
     return 0;
 }
