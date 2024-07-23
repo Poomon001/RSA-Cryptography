@@ -180,7 +180,7 @@ int main(void) {
     d = d / e;
     // int32_t d = (int32_t)((uint64_t(x * phi) + 1) / e);
 
-    int32_t t = 9; // Note; The message being encrypted, t, must be less that the modulus, PQ
+    int32_t t = 7; // Note; The message being encrypted, t, must be less that the modulus, PQ
     int32_t pq = p * q;
     printf("d:%llu, p: %d, q: %d, e: %d, pq: %d, (p-1)(q-1): %d\n", d, p, q, e, p * q, phi);
 
