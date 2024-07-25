@@ -108,31 +108,32 @@ int32_t bruteforce_rsa_cryptography(int32_t t, int32_t e, int32_t pq) {
 //}
 
 /** With modular_exponentiation and montgomery_modular_multiplication: **/
-int32_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m){
+uint64_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m){
     uint64_t r = 1ULL << ((uint64_t)(log2(m)) + 1);
     uint64_t r2 = (r * r) % m;
-    printf("r: %lld, r2: %lld\n", r, r2);
+    printf("r: %llu, r2: %llu\n", r, r2);
     uint64_t z = 1;
 
     p = p % m; //to ensure that p does not become too large than 32 bits
+    printf("p: %llu\n", p);
     while(e > 0){
-        printf("e: %lld\n", e);
+        printf("e: %llu\n", e);
         uint64_t p_prime = montgomery_modular_multiplication(p, r2, m);
         if ((e & 1) == 1){
             uint64_t z_prime = montgomery_modular_multiplication(z, r2, m);
-//            printf("%lld * %lld mod %lld\n", z, p, m);
+           printf("%llu * %llu mod %llu\n", z, p, m);
             z = montgomery_modular_multiplication(z_prime, p_prime, m);
             z = montgomery_modular_multiplication(z, 1, m);
-//            printf("result z: %lld\n", z);
+           printf("result z: %llu\n", z);
         }
         e = e >> 1;
-//        printf("%lld * %lld mod %lld\n", p, p, m);
+       printf("%llu * %llu mod %llu\n", p, p, m);
         p = montgomery_modular_multiplication(p_prime, p_prime, m);
         p = montgomery_modular_multiplication(p, 1, m);
-//        printf("result p: %lld\n", p);
+       printf("result p: %llu\n", p);
     }
-    printf("\nresult: %lld\n", z);
-    return (int32_t)z;
+    printf("\nresult: %llu\n", z);
+    return z;
 }
 
 uint64_t montgomery_modular_multiplication(uint64_t x, uint64_t y, uint64_t M) {
@@ -158,11 +159,16 @@ uint64_t montgomery_modular_multiplication(uint64_t x, uint64_t y, uint64_t M) {
 
 int main(void) {
     // P and Q are two large prime numbers
-    // we kept the max bits to be 8 because pq value was becoming too large, resulting in further multiplication to be too large
-    const int maxBits = 17;
+    // we kept the max bits to be 18 because pq value was becoming too large, resulting in further multiplication to be larger than 64 bits
+    //NOTE: When the max is set to 19, the r * r value becomes larger than 64 bits
+    //NOTE: The max bits must be 16 bits or less because when p and q are 16 bits, it produces a 32 bit pq value
+    //When pq is 32 bits, the r value is 2^32 which is larger than 32 bits
+    //When r * r is calculated, it becomes larger than 64 bits
+    //So when p and q are larger than 16 bits, it results in r * r being larger than 64 bits
+    const int maxBits = 16;
     const int minBits = 3;
-    const uint32_t p = get_32bit_prime(maxBits, 99);
-    const int32_t q = get_32bit_prime(maxBits, 5);
+    const uint64_t p = get_32bit_prime(maxBits, 99);
+    const uint64_t q = get_32bit_prime(maxBits, 5);
 
     //(P - 1)*(Q - 1) is an even number
     int32_t phi = (p - 1) * (q - 1);
@@ -170,27 +176,34 @@ int main(void) {
     const int randomBits = (rand() % (maxBits - minBits + 1)) + minBits;
     //E is an odd prime number
     // E and (P - 1)*(Q - 1) are relatively prime (meaning they have no prime factors in common)
-    int32_t e;
+    uint64_t e;
     do {
         e = get_32bit_prime(randomBits, 99);
     } while (phi % e == 0);
 
     int32_t x = compute_x(phi, e);
+    printf("x: %d\n", x);
     uint64_t d = (uint64_t)x * phi + 1;
     d = d / e;
     // int32_t d = (int32_t)((uint64_t(x * phi) + 1) / e);
 
-    int32_t t = 7; // Note; The message being encrypted, t, must be less that the modulus, PQ
-    int32_t pq = p * q;
-    printf("d:%llu, p: %d, q: %d, e: %d, pq: %d, (p-1)(q-1): %d\n", d, p, q, e, p * q, phi);
+    // TODO: The message being encrypted, t, must be less that the modulus, PQ
+    // This must be less than pq
+    uint64_t t = 1845588466;
+    if ((p * q) < t){
+        printf("Our plain text t must be less than p * q\n");
+        exit(-1);
+    }
+    uint64_t pq = p * q;
+    printf("d:%llu, p: %llu, q: %llu, e: %llu, pq: %llu, (p-1)(q-1): %d\n", d, p, q, e, p * q, phi);
 
-    int32_t c_encrypted = modular_exponentiation(t, e, pq);
+    uint64_t c_encrypted = modular_exponentiation(t, e, pq);
 
-    printf("c_encrypted: %d\n", c_encrypted);
+    printf("c_encrypted: %llu\n", c_encrypted);
 
-    int32_t t_decrypted = modular_exponentiation(c_encrypted, d, pq);
+    uint64_t t_decrypted = modular_exponentiation(c_encrypted, d, pq);
 
-    printf("t_decrypted: %d\n", t_decrypted);
+    printf("t_decrypted: %llu\n", t_decrypted);
 
     /* keep this for now */
 //    int64_t m = p * q;
