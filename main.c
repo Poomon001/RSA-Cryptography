@@ -3,9 +3,17 @@
 #include <stdlib.h>
 #include <gmp.h>
 #include <math.h>
-uint64_t montgomery_modular_multiplication(uint64_t z, uint64_t p, uint64_t pq);
 
-int extended_euclidean(int a, int b, int *x, int *y) {
+uint64_t montgomery_modular_multiplication(uint64_t z, uint64_t p, uint64_t pq);
+uint64_t get_32bit_prime(int bits, int seed);
+
+/*
+ * Calculates the greatest common divisor (GCD) of two integers using the Extended Euclidean Algorithm: a⋅x+b⋅y = GCD(a,b)
+ * Parameters: int bits - the number of bits in the prime number
+ *           : int seed - the seed for the random number generator
+ * Returns: uint16_t - the generated prime number
+ * */
+int gcd_extended(int a, int b, int *x, int *y) {
     if (a == 0) {
         *x = 0;
         *y = 1;
@@ -13,7 +21,7 @@ int extended_euclidean(int a, int b, int *x, int *y) {
     }
 
     int x1, y1;
-    int gcd = extended_euclidean(b % a, a, &x1, &y1);
+    int gcd = gcd_extended(b % a, a, &x1, &y1);
 
     *x = y1 - (b / a) * x1;
     *y = x1;
@@ -24,7 +32,7 @@ int extended_euclidean(int a, int b, int *x, int *y) {
 // Function to compute modular multiplicative inverse
 int mod_inverse(int a, int m) {
     int x, y;
-    int gcd = extended_euclidean(a, m, &x, &y);
+    int gcd = gcd_extended(a, m, &x, &y);
     if (gcd != 1) {
         printf("Modular inverse does not exist\n");
         return -1;
@@ -37,11 +45,11 @@ int mod_inverse(int a, int m) {
 // D = (1 + x * Y) / E
 // (1 + X * Y) = x * E where k is an integer
 // X * Y = x * E - 1
-// (x * E) % Y = 1 % Y
+// (x * E) % Y = 1 % Y => E * X + Y * k = 1
 // x % y = E^-1 % Y
 
 // Function to compute X
-int32_t compute_x(int32_t y, int e) {
+int32_t compute_x(uint32_t y, uint16_t e) {
     uint64_t k = mod_inverse(e, y);
     if (k == -1) return -1;  // Error case
 
@@ -55,29 +63,36 @@ int32_t compute_x(int32_t y, int e) {
     return x;
 }
 
-int32_t get_32bit_prime(int bits, unsigned long seed) {
+/*
+ * Generates a random prime number with a specified number of bits using the GMP library
+ * Parameters: int bits - the number of bits in the prime number
+ *           : int seed - the seed for the random number generator
+ * Returns: uint16_t - the generated prime number
+ * */
+uint16_t get_16bit_prime(int bits, int seed) {
     gmp_randstate_t state;
     mpz_t prime;
 
-    // Initialize state and prime
+    // initializes the random state
     gmp_randinit_default(state);
     gmp_randseed_ui(state, seed);
     mpz_init(prime);
 
-    // Generate a random number with the specified bit size
+    // Generate a random number with the specified bits
     mpz_urandomb(prime, state, bits);
 
-    // Find the next prime greater than the random number
+    // Find the next greater prime number then store it back in prime
     mpz_nextprime(prime, prime);
 
     // Convert prime to an integer
-    uint32_t result = mpz_get_ui(prime); // Use uint32_t to fit the result
+    // Use uint16_t to fit the result
+    uint16_t result = mpz_get_ui(prime);
 
     // Clear memory
     mpz_clear(prime);
     gmp_randclear(state);
 
-    return (int32_t)result;
+    return result;
 }
 
 /** With no optimization:
@@ -159,29 +174,29 @@ uint64_t montgomery_modular_multiplication(uint64_t x, uint64_t y, uint64_t M) {
 
 int main(void) {
     // P and Q are two large prime numbers
-    // we kept the max bits to be 18 because pq value was becoming too large, resulting in further multiplication to be larger than 64 bits
-    //NOTE: When the max is set to 19, the r * r value becomes larger than 64 bits
     //NOTE: The max bits must be 16 bits or less because when p and q are 16 bits, it produces a 32 bit pq value
     //When pq is 32 bits, the r value is 2^32 which is larger than 32 bits
     //When r * r is calculated, it becomes larger than 64 bits
     //So when p and q are larger than 16 bits, it results in r * r being larger than 64 bits
     const int maxBits = 16;
     const int minBits = 3;
-    const uint64_t p = get_32bit_prime(maxBits, 99);
-    const uint64_t q = get_32bit_prime(maxBits, 5);
+    const uint16_t p = get_16bit_prime(maxBits, 99);
+    const uint16_t q = get_16bit_prime(maxBits, 5);
 
-    //(P - 1)*(Q - 1) is an even number
-    int32_t phi = (p - 1) * (q - 1);
+    //(P - 1) * (Q - 1) is an even number
+    const uint32_t phi = (p - 1) * (q - 1);
+
     //E > 1 and E < P*Q
-    const int randomBits = (rand() % (maxBits - minBits + 1)) + minBits;
+    const int randomBits = rand() % (maxBits - minBits + 1) + minBits;
+
     //E is an odd prime number
-    // E and (P - 1)*(Q - 1) are relatively prime (meaning they have no prime factors in common)
-    uint64_t e;
+    //E and (P - 1)*(Q - 1) are relatively prime (meaning they have no prime factors in common)
+    uint16_t e;
     do {
-        e = get_32bit_prime(randomBits, 99);
+        e = get_16bit_prime(randomBits, 99);
     } while (phi % e == 0);
 
-    int32_t x = compute_x(phi, e);
+    uint32_t x = compute_x(phi, e);
     printf("x: %d\n", x);
     uint64_t d = (uint64_t)x * phi + 1;
     d = d / e;
@@ -195,7 +210,7 @@ int main(void) {
         exit(-1);
     }
     uint64_t pq = p * q;
-    printf("d:%llu, p: %llu, q: %llu, e: %llu, pq: %llu, (p-1)(q-1): %d\n", d, p, q, e, p * q, phi);
+    printf("d:%llu, p: %d, q: %d, e: %d, pq: %d, (p-1)(q-1): %d\n", d, p, q, e, p * q, phi);
 
     uint64_t c_encrypted = modular_exponentiation(t, e, pq);
 
