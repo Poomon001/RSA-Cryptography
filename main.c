@@ -4,50 +4,54 @@
 #include <gmp.h>
 #include <math.h>
 
-uint64_t montgomery_modular_multiplication(uint64_t z, uint64_t p, uint64_t pq);
-uint16_t get_16bit_prime(int bits, int seed);
-int mod_inverse(int e, int phi);
-int gcd_extended(int e, int phi, int *x, int *y);
-int32_t compute_x(uint32_t phi, uint16_t e);
+uint64_t montgomery_modular_multiplication(uint64_t x, uint64_t y, uint64_t M);
 uint64_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m);
+uint32_t mod_inverse(uint16_t e, uint32_t phi);
+uint16_t get_16bit_prime(int bits, int seed);
+void gcd_extended(uint16_t e, uint32_t phi, int *x, int *y);
+int compute_x(uint32_t phi, uint16_t e);
 
 /*
- * Calculates the greatest common divisor (GCD) of two integers using the Extended Euclidean Algorithm: a⋅x+b⋅y = GCD(a,b)
- * Parameters: int bits - the number of bits in the prime number
- *           : int seed - the seed for the random number generator
- * Returns: uint16_t - the generated prime number
+ * Calculates the greatest common divisor (GCD) and coefficient integer of integers e and phi: e*x + phi*⋅y = gcd(e,phi)
+ * Parameters: uint16_t e - the prime number
+ *           : uint32_t phi - (p - 1)(q - 1)
+ *           : int* x - the coefficient integer of e
+ *           : int* y - the coefficient integer of phi
+ * Returns: None
  * */
-int gcd_extended(int e, int phi, int *x, int *y) {
+void gcd_extended(uint16_t e, uint32_t phi, int* x, int* y) {
     if (e == 0) {
         *x = 0;
         *y = 1;
-        return phi;
+        return;
     }
 
     int x1, y1;
-    int gcd = gcd_extended(phi % e, e, &x1, &y1);
+    gcd_extended(phi % e, e, &x1, &y1);
 
     *x = y1 - (phi / e) * x1;
     *y = x1;
-
-    return gcd;
 }
 
 // D is called the multiplicative inverse of E.
-int mod_inverse(int e, int phi) {
+/*
+ * Calculates Compute mod_inverse of E mod PHI
+ * Parameters: uint16_t e - the prime number
+ *           : uint32_t phi - (p - 1)(q - 1)
+ * Returns: int - mod_inverse of E mod PHI
+ * */
+uint32_t mod_inverse(uint16_t e, uint32_t phi) {
     int x, y;
-    int gcd = gcd_extended(e, phi, &x, &y);
-    if (gcd != 1) {
-        printf("Modular inverse does not exist\n");
-        return -1;
-    }
+    gcd_extended(e, phi, &x, &y);
+
+    // x is the modular multiplicative inverse of e % phi
     return (x % phi + phi) % phi;
 }
 
 // from D = (1 + X * (P - 1) * (Q - 1)) / E where X and D are integers, find X
-int32_t compute_x(uint32_t phi, uint16_t e) {
+int compute_x(uint32_t phi, uint16_t e) {
     // Compute k such that k * e % phi = 1
-    uint64_t k = mod_inverse(e, phi);
+    uint32_t k = mod_inverse(e, phi);
 
     // Compute X for the equation
     // if (k * e) % phi = 1, then k * e - 1 is divisible by phi. Then x is garanteed to be an integer
