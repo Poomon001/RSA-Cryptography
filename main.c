@@ -185,12 +185,6 @@ uint64_t montgomery_modular_multiplication(uint64_t x, uint64_t y, uint64_t M) {
     uint64_t t = 0;
     uint64_t n;
 
-    // first one iteration outside the loop so that X(i) = X(0)
-    n = ((t & 1)) ^ ((x & 1) & (y & 1));
-    t = (t + ((x & 1) * y) + (n * M)) >> 1;
-    m = m >> 1;
-    x = x >> 1;
-
     // loop through the number of m bits in pq
     while(m > 0){
         // n = T(0) XOR (X(i) AND Y(0))
