@@ -3,13 +3,14 @@
 #include <stdlib.h>
 #include <gmp.h>
 #include <math.h>
+#include <sys/time.h>
 
 uint64_t montgomery_modular_multiplication(uint64_t x, uint64_t y, uint64_t M);
 uint64_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m);
-uint32_t mod_inverse(uint16_t e, uint32_t phi);
+int32_t compute_x(uint32_t phi, uint16_t e);
+int mod_inverse(int e, int phi);
 uint16_t get_16bit_prime(int bits, int seed);
-void gcd_extended(uint16_t e, uint32_t phi, int *x, int *y);
-int compute_x(uint32_t phi, uint16_t e);
+void gcd_extended(int e, int phi, int *x, int *y);
 
 /**
  * Calculates coefficient integer of integers e and phi: e*x + phi*⋅y = gcd(e,phi)
@@ -19,7 +20,7 @@ int compute_x(uint32_t phi, uint16_t e);
  *           : int* y - the coefficient integer of phi
  * Returns: None
  * */
-void gcd_extended(uint16_t e, uint32_t phi, int* x, int* y) {
+void gcd_extended(int e, int phi, int *x, int *y) {
     if (e == 0) {
         *x = 0;
         *y = 1;
@@ -31,22 +32,21 @@ void gcd_extended(uint16_t e, uint32_t phi, int* x, int* y) {
 
     *x = y1 - (phi / e) * x1;
     *y = x1;
-}
 
+}
 /**
  * Calculates mod_inverse of E mod PHI
  * Parameters: uint16_t e - the prime number
  *           : uint32_t phi - (p - 1)(q - 1)
  * Returns: int - mod_inverse of E mod PHI
  * */
-uint32_t mod_inverse(uint16_t e, uint32_t phi) {
+int mod_inverse(int e, int phi) {
     int x, y;
     gcd_extended(e, phi, &x, &y);
 
     // x is the modular multiplicative inverse of e % phi
     return (x % phi + phi) % phi;
 }
-
 /**
  * Computes X for the equation (X * phi + 1) % E = 0
  * Parameters: uint16_t e - the prime number
@@ -54,9 +54,9 @@ uint32_t mod_inverse(uint16_t e, uint32_t phi) {
  * Returns: int - x for the equation
  * */
 
-int compute_x(uint32_t phi, uint16_t e) {
+int32_t compute_x(uint32_t phi, uint16_t e) {
     // Compute k such that k * e % phi = 1
-    uint32_t k = mod_inverse(e, phi);
+    uint64_t k = mod_inverse(e, phi);
 
     // Compute X for the equation
     // if (k * e) % phi = 1, then k * e - 1 is divisible by phi. Then x is guaranteed to be an integer
@@ -180,6 +180,7 @@ uint64_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m){
  *         : uint64_t M - the modulus
  * Returns: uint64_t t - the result of the Montgomery Modular Multiplication
  * */
+
 uint64_t montgomery_modular_multiplication(uint64_t x, uint64_t y, uint64_t M) {
     uint64_t m = M;
     uint64_t t = 0;
@@ -205,46 +206,46 @@ uint64_t montgomery_modular_multiplication(uint64_t x, uint64_t y, uint64_t M) {
 }
 
 int main(void) {
+    struct timeval start_time, end_time;
+
+    // start time
+    gettimeofday(&start_time, NULL);
+
     // P and Q are two large prime numbers
     // NOTE: The max bits must be 16 bits or less because when p and q are 16 bits, it produces a 32 bit pq value
     // When pq is 32 bits, the r value is 2^32 which is larger than 32 bits
     // When r * r is calculated, it becomes larger than 64 bits
     // So when p and q are larger than 16 bits, it results in r * r being larger than 64 bits
-    const int maxBits = 16;
-    const int minBits = 3;
-    const uint16_t p = get_16bit_prime(maxBits, 99);
-    const uint16_t q = get_16bit_prime(maxBits, 5);
+    const uint16_t p = get_16bit_prime(16, 99);
+    const uint16_t q = get_16bit_prime(16, 5);
 
     //(P - 1) * (Q - 1) is an even number
     const uint32_t phi = (p - 1) * (q - 1);
 
     //E > 1 and E < P*Q
-    const int randomBits = rand() % (maxBits - minBits + 1) + minBits;
-
     //E is an odd prime number
     //E and (P - 1)*(Q - 1) are relatively prime (meaning they have no prime factors in common)
     uint16_t e;
     do {
-        e = get_16bit_prime(randomBits, 99);
+        e = get_16bit_prime(16, 99);
     } while (phi % e == 0);
 
     uint32_t x = compute_x(phi, e);
-    printf("x: %d\n", x);
 
     // Compute D = (X(P −1)(Q−1)+1)/E where d is an integer
     uint64_t d = (uint64_t)x * phi + 1;
-    d = d / e;
+    d = d / (uint64_t)e;
 
     // t is the plaintext (a positive integer) and t is a message being encrypted
     // t must be less than the modulus PQ
     // check that t is less than p * q
-    uint64_t t = 1845588466;
+    // 1845588466
+    uint32_t t = 1845588466;
     if ((p * q) < t){
         printf("Our plain text t must be less than p * q\n");
         exit(-1);
     }
     uint64_t pq = p * q;
-    printf("d:%llu, p: %d, q: %d, e: %d, pq: %d, (p-1)(q-1): %d\n", d, p, q, e, p * q, phi);
 
     // encryption of plaintext T, C = T^E mod PQ
     uint64_t c_encrypted = modular_exponentiation(t, e, pq);
@@ -256,6 +257,9 @@ int main(void) {
 
     printf("t_decrypted: %llu\n", t_decrypted);
 
+    // end time
+    gettimeofday(&end_time, NULL);
+    printf("Total Time: %ld microseconds\n", ((end_time.tv_sec * 1000000 + end_time.tv_usec) - (start_time.tv_sec * 1000000 + start_time.tv_usec)));
+
     return 0;
 }
-
