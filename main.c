@@ -8,7 +8,7 @@ uint64_t montgomery_modular_multiplication(uint64_t x, uint64_t y, uint64_t M);
 uint64_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m);
 uint32_t mod_inverse(uint16_t e, uint32_t phi);
 uint16_t get_16bit_prime(int bits, int seed);
-void gcd_extended(uint16_t e, uint32_t phi, int *x, int *y);
+void gcd_extended(uint16_t e, uint32_t phi, int* x, int* y);
 int compute_x(uint32_t phi, uint16_t e);
 
 /**

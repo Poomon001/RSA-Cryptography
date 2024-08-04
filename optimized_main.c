@@ -3,12 +3,14 @@
 #include <stdlib.h>
 #include <gmp.h>
 #include <math.h>
+#include <time.h>
+
 
 uint64_t montgomery_modular_multiplication(uint64_t x, uint64_t y, uint64_t M);
 uint64_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m);
 uint32_t mod_inverse(uint16_t e, uint32_t phi);
 uint16_t get_16bit_prime(int bits, int seed);
-void gcd_extended(uint16_t e, uint32_t phi, int *x, int *y);
+void gcd_extended(uint16_t e, uint32_t phi, int* x, int* y);
 int compute_x(uint32_t phi, uint16_t e);
 
 /**
@@ -258,34 +260,44 @@ int main(void) {
 
     //(P - 1) * (Q - 1) is an even number
     const uint32_t phi = (p - 1) * (q - 1);
-
+    srand(time(0));
     //E > 1 and E < P*Q
+    // look up table for random bits & operator strength reduction (e.g x % (2^c) == x & ((2^c) - 1))
+//    const int lookup[16] = {3,4,5,6,7,8,9,10,11,12,13,14,15,16,15,16};
     const int randomBits = rand() % (maxBits - minBits + 1) + minBits;
+
+//    const int randomBits2 = rand() % (maxBits - minBits + 1) + minBits;
+    printf("Random bit 1: %d\n", randomBits);
+//    printf("Random bit 2: %d\n", randomBits2);
 
     //E is an odd prime number
     //E and (P - 1)*(Q - 1) are relatively prime (meaning they have no prime factors in common)
     uint16_t e;
     do {
-        e = get_16bit_prime(randomBits, 99);
+        e = get_16bit_prime(7, 99);
     } while (phi % e == 0);
 
+    printf("e: %d\n", e);
+
     uint32_t x = compute_x(phi, e);
+
     printf("x: %d\n", x);
 
     // Compute D = (X(P −1)(Q−1)+1)/E where d is an integer
     uint64_t d = (uint64_t)x * phi + 1;
     d = d / e;
 
+    printf("d: %llu\n", d);
+
     // t is the plaintext (a positive integer) and t is a message being encrypted
     // t must be less than the modulus PQ
     // check that t is less than p * q
-    uint32_t t = 1845588466;
-    if ((p * q) < t){
-        printf("Our plain text t must be less than p * q\n");
-        exit(-1);
-    }
+    uint64_t t = 1845588466;
+
+    // branch elimination: minor performance improvements, but make the code less readable
+    (p * q) < t && (printf("Our plain text t must be less than p * q\n"), exit(-1), 0);
+
     uint64_t pq = p * q;
-    printf("d:%llu, p: %d, q: %d, e: %d, pq: %d, (p-1)(q-1): %d\n", d, p, q, e, p * q, phi);
 
     // encryption of plaintext T, C = T^E mod PQ
     uint64_t c_encrypted = modular_exponentiation(t, e, pq);
