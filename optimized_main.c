@@ -135,10 +135,12 @@ int32_t bruteforce_rsa_cryptography(int32_t t, int32_t e, int32_t pq) {
  * */
 uint64_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m){
     // r = 2^m bits
-    uint64_t r = 1ULL << ((uint64_t)(log2(m)) + 1);
+    uint64_t m_bits = log2(m) + 1;
+    uint64_t r = 1ULL << m_bits;
 
+    // operator strength reduction, replacing multiplication with bit-shifting
     // r*r mod m to pre-scale values later
-    uint64_t r2 = (r * r) % m;
+    uint64_t r2 = (r << m_bits) % m;
 
     uint64_t z = 1;
 
@@ -151,7 +153,8 @@ uint64_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m){
         uint64_t p_prime = montgomery_modular_multiplication(p, r2, m);
 
         // if right-most bit of e is 1
-        if ((e & 1) == 1){
+        // using predicate operations to replace boolean operations
+        if (e & 1){
             // z' = z * r*r * r^-1 mod m = z * r mod m
             uint64_t z_prime = montgomery_modular_multiplication(z, r2, m);
 
@@ -180,33 +183,65 @@ uint64_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m){
  *         : uint64_t M - the modulus
  * Returns: uint64_t t - the result of the Montgomery Modular Multiplication
  * */
+
 uint64_t montgomery_modular_multiplication(uint64_t x, uint64_t y, uint64_t M) {
     uint64_t m = M;
     uint64_t t = 0;
-    uint64_t n;
+    uint64_t y_and_1 = y & 1; // precompute y & 1
+    uint64_t n, xy, nm, x_and_1;
 
-    // first one iteration outside the loop so that X(i) = X(0)
-    n = ((t & 1)) ^ ((x & 1) & (y & 1));
-    t = (t + ((x & 1) * y) + (n * M)) >> 1;
-    m = m >> 1;
-    x = x >> 1;
 
-    // loop through the number of m bits in pq
-    while(m > 0){
-        // n = T(0) XOR (X(i) AND Y(0))
-        n = ((t & 1)) ^ ((x & 1) & (y & 1));
-
-        // T = (T + X(i)Y + nM) >> 1
-        t = (t + ((x & 1) * y) + (n * M)) >> 1;
-
-        // get next bit of X(i) by shifting x to the right
+    // Loop through the number of m bits in pq
+    // loop unrolled thrice
+    // software pipelining by reordering instructions
+    while (m > 2) {
+        // First iteration
+        n = ((t & 1)) ^ ((x & 1) & y_and_1);
+        // replace with multiplications with predicate operations and 2's complement
+        x_and_1 = (x & 1);
+        xy = -x_and_1 & y;
+        nm = (-n & M);
+        t = (t + xy + nm) >> 1;
         x = x >> 1;
+
+        // Second iteration (unrolled)
+        n = ((t & 1)) ^ ((x & 1) & y_and_1);
+        // replace with multiplications with predicate operations and 2's complement
+        x_and_1 = (x & 1);
+        xy = -x_and_1 & y;
+        nm = (-n & M);
+        t = (t + xy + nm) >> 1;
+        x = x >> 1;
+
+        // third iteration (unrolled)
+        n = ((t & 1)) ^ ((x & 1) & y_and_1);
+        // replace with multiplications with predicate operations and 2's complement
+        x_and_1 = (x & 1);
+        xy = -x_and_1 & y;
+        nm = (-n & M);
+        t = (t + xy + nm) >> 1;
+        x = x >> 1;
+
+        // improve by shifting 3 bits at once
+        m = m >> 3;
+    }
+
+    // remaining iterations (1 to 2)
+    while (m > 0) {
+        n = ((t & 1)) ^ ((x & 1) & y_and_1);
+        // replace with nm multiplication with predicate operation and 2' complement
+        x_and_1 = (x & 1);
+        xy = -x_and_1 & y;
+        nm = (-n & M);
+        t = (t + xy + nm) >> 1;
+        x = x >> 1;
+
         m = m >> 1;
     }
 
-    if (t >= M) {
-        t = t - M;
-    }
+    // branch elimination
+    t -= (t >= M) * M;
+
     return t;
 }
 
@@ -244,7 +279,7 @@ int main(void) {
     // t is the plaintext (a positive integer) and t is a message being encrypted
     // t must be less than the modulus PQ
     // check that t is less than p * q
-    uint64_t t = 1845588466;
+    uint32_t t = 1845588466;
     if ((p * q) < t){
         printf("Our plain text t must be less than p * q\n");
         exit(-1);
