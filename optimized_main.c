@@ -281,7 +281,7 @@ int main(void) {
     // t is the plaintext (a positive integer) and t is a message being encrypted
     // t must be less than the modulus PQ
     // check that t is less than p * q
-    uint32_t t = 1845588466;
+    uint32_t t = 1073938441;
 
     uint64_t pq = p * q;
     
