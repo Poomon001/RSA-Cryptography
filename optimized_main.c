@@ -5,12 +5,12 @@
 #include <math.h>
 #include <sys/time.h>
 
-uint64_t montgomery_modular_multiplication(uint64_t x, uint64_t y, uint64_t M);
-uint64_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m);
-int32_t compute_x(uint32_t phi, uint16_t e);
-int mod_inverse(int e, int phi);
-uint16_t get_16bit_prime(int bits, int seed);
-void gcd_extended(int e, int phi, int* x, int* y);
+uint64_t montgomery_modular_multiplication(register uint64_t x, register uint64_t y, register uint64_t M);
+uint64_t modular_exponentiation(register uint64_t p, register uint64_t e, register uint64_t m);
+int32_t compute_x(register uint32_t phi, register uint16_t e);
+int mod_inverse(register int e, register int phi);
+uint16_t get_16bit_prime(register int bits, register int seed);
+void gcd_extended(register int e, register int phi, int* restrict x, int* restrict y);
 
 /**
  * Calculates coefficient integer of integers e and phi: e*x + phi*⋅y = gcd(e,phi)
@@ -20,7 +20,8 @@ void gcd_extended(int e, int phi, int* x, int* y);
  *           : int* y - the coefficient integer of phi
  * Returns: None
  * */
-void gcd_extended(int e, int phi, int* x, int* y) {
+// added restrict to ensure that x and y pointers do not overlap
+void gcd_extended(register int e, register int phi, int* restrict x, int* restrict y) {
     if (e == 0) {
         *x = 0;
         *y = 1;
@@ -40,7 +41,7 @@ void gcd_extended(int e, int phi, int* x, int* y) {
  *           : int phi - (p - 1)(q - 1)
  * Returns: int - mod_inverse of E mod PHI
  * */
-int mod_inverse(int e, int phi) {
+int mod_inverse(register int e, register int phi) {
     int x, y;
     gcd_extended(e, phi, &x, &y);
 
@@ -55,7 +56,7 @@ int mod_inverse(int e, int phi) {
  * Returns: int - x for the equation
  * */
 
-int compute_x(uint32_t phi, uint16_t e) {
+int32_t compute_x(register uint32_t phi, register uint16_t e) {
     // Compute k such that k * e % phi = 1
     uint32_t k = mod_inverse(e, phi);
 
@@ -73,7 +74,7 @@ int compute_x(uint32_t phi, uint16_t e) {
  *           : int seed - the seed for the random number generator
  * Returns: uint16_t - the generated prime number
  * */
-uint16_t get_16bit_prime(int bits, int seed) {
+uint16_t get_16bit_prime(register int bits, register int seed) {
     gmp_randstate_t state;
     mpz_t prime;
 
@@ -134,7 +135,7 @@ int32_t bruteforce_rsa_cryptography(int32_t t, int32_t e, int32_t pq) {
  *          : uint64_t m - the modulus
  * Returns: uint64_t z - the result of the modular exponentiation
  * */
-uint64_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m){
+uint64_t modular_exponentiation(register uint64_t p, register uint64_t e, register uint64_t m) {
     // r = 2^m bits
     uint64_t m_bits = log2(m) + 1;
     uint64_t r = 1ULL << m_bits;
@@ -185,7 +186,7 @@ uint64_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m){
  * Returns: uint64_t t - the result of the Montgomery Modular Multiplication
  * */
 
-uint64_t montgomery_modular_multiplication(uint64_t x, uint64_t y, uint64_t M) {
+uint64_t montgomery_modular_multiplication(register uint64_t x, register uint64_t y, register uint64_t M) {
     uint64_t m = M;
     uint64_t t = 0;
     uint64_t y_and_1 = y & 1; // precompute y & 1
@@ -281,11 +282,11 @@ int main(void) {
     // t must be less than the modulus PQ
     // check that t is less than p * q
     uint32_t t = 1845588466;
-    
-    // branch elimination: minor performance improvements, but make the code less readable
-    (p * q) < t && (printf("Our plain text t must be less than p * q\n"), exit(-1), 0);
 
     uint64_t pq = p * q;
+    
+    // branch elimination: minor performance improvements, but make the code less readable
+    (pq) < t && (printf("Our plain text t must be less than p * q\n"), exit(-1), 0);
 
     // encryption of plaintext T, C = T^E mod PQ
     uint64_t c_encrypted = modular_exponentiation(t, e, pq);
