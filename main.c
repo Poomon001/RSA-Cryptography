@@ -4,12 +4,13 @@
 #include <gmp.h>
 #include <math.h>
 #include <sys/time.h>
+#include <assert.h>
 
 uint64_t montgomery_modular_multiplication(uint64_t x, uint64_t y, uint64_t M);
 uint64_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m);
 int32_t compute_x(uint32_t phi, uint16_t e);
 int mod_inverse(int e, int phi);
-uint16_t get_16bit_prime(int bits, int seed);
+uint16_t get_16bit_prime(int seed);
 void gcd_extended(int e, int phi, int *x, int *y);
 
 /**
@@ -72,7 +73,7 @@ int32_t compute_x(uint32_t phi, uint16_t e) {
  *           : int seed - the seed for the random number generator
  * Returns: uint16_t - the generated prime number
  * */
-uint16_t get_16bit_prime(int bits, int seed) {
+uint16_t get_16bit_prime(int seed) {
     gmp_randstate_t state;
     mpz_t prime;
 
@@ -82,7 +83,7 @@ uint16_t get_16bit_prime(int bits, int seed) {
     mpz_init(prime);
 
     // Generate a random number with the specified bits
-    mpz_urandomb(prime, state, bits);
+    mpz_urandomb(prime, state, 15);
 
     // Find the next greater prime number then store it back in prime
     mpz_nextprime(prime, prime);
@@ -205,30 +206,25 @@ uint64_t montgomery_modular_multiplication(uint64_t x, uint64_t y, uint64_t M) {
     return t;
 }
 
-int main(void) {
-    struct timeval start_time, end_time;
-
-    // start time
-    gettimeofday(&start_time, NULL);
-
+int cryptography(uint32_t t, int seed_p, int seed_q, int seed_e) {
     // P and Q are two large prime numbers
     // NOTE: The max bits must be 16 bits or less because when p and q are 16 bits, it produces a 32 bit pq value
     // When pq is 32 bits, the r value is 2^32 which is larger than 32 bits
     // When r * r is calculated, it becomes larger than 64 bits
     // So when p and q are larger than 16 bits, it results in r * r being larger than 64 bits
-    const uint16_t p = get_16bit_prime(16, 99);
-    const uint16_t q = get_16bit_prime(16, 5);
+    const uint16_t p = get_16bit_prime(seed_p);
+    const uint16_t q = get_16bit_prime(seed_q);
 
     //(P - 1) * (Q - 1) is an even number
-    const uint32_t phi = (p - 1) * (q - 1);
+    const uint32_t phi = (uint32_t)(p - 1) * (uint32_t)(q - 1);
 
     //E > 1 and E < P*Q
     //E is an odd prime number
     //E and (P - 1)*(Q - 1) are relatively prime (meaning they have no prime factors in common)
     uint16_t e;
     do {
-        e = get_16bit_prime(16, 99);
-    } while (phi % e == 0);
+        e = get_16bit_prime(seed_e);
+    } while (phi % (uint32_t)e == 0);
 
     uint32_t x = compute_x(phi, e);
 
@@ -239,23 +235,43 @@ int main(void) {
     // t is the plaintext (a positive integer) and t is a message being encrypted
     // t must be less than the modulus PQ
     // check that t is less than p * q
-    // 1845588466
-    uint32_t t = 1845588466;
-    if ((p * q) < t){
-        printf("Our plain text t must be less than p * q\n");
+    uint64_t pq = (uint32_t)p * (uint32_t)q;
+
+    if ((pq) < t){
+        printf("Our plain text t must be less than p * q [ q: %d, p: %d, p * q: %llu, t: %d] \n", q, p, pq, t);
         exit(-1);
     }
-    uint64_t pq = p * q;
 
     // encryption of plaintext T, C = T^E mod PQ
     uint64_t c_encrypted = modular_exponentiation(t, e, pq);
 
-    printf("c_encrypted: %llu\n", c_encrypted);
+//    printf("c_encrypted: %llu\n", c_encrypted);
 
     // decryption of the ciphertext C, T = C^D mod PQ
     uint64_t t_decrypted = modular_exponentiation(c_encrypted, d, pq);
 
-    printf("t_decrypted: %llu\n", t_decrypted);
+//    printf("t_decrypted: %llu\n", t_decrypted);
+
+    return t_decrypted == t;
+}
+
+int main(void) {
+    struct timeval start_time, end_time;
+
+    // start time
+    gettimeofday(&start_time, NULL);
+
+    const int lookup[10] = {1,2,10,999,1000,5678,98765,666666,9876543,10000000};
+
+    // t is the plaintext (a positive integer) and t is a message being encrypted
+    // t must be less than the modulus PQ (less than 31 bits, since the multiplication of two lowest 16 bit int is under 31 bits)
+    for(int k = 0 ; k < 100; k++){
+        for (int i = 0; i < 10; i++) {
+            assert(cryptography(lookup[i], 99, 5, 99) == 1);
+            assert(cryptography(lookup[i], 1, 5, 99) == 1);
+            assert(cryptography(lookup[i], 11, 10, 111) == 1);
+        }
+    }
 
     // end time
     gettimeofday(&end_time, NULL);
