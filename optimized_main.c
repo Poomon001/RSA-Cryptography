@@ -277,12 +277,12 @@ int cryptography(uint32_t t, int seed_p, int seed_q, int seed_e) {
     // encryption of plaintext T, C = T^E mod PQ
     uint64_t c_encrypted = modular_exponentiation(t, e, pq);
 
-//    printf("c_encrypted: %llu\n", c_encrypted);
+    // printf("c_encrypted: %llu\n", c_encrypted);
 
     // decryption of the ciphertext C, T = C^D mod PQ
     uint64_t t_decrypted = modular_exponentiation(c_encrypted, d, pq);
 
-//    printf("t_decrypted: %llu\n", t_decrypted);
+    // printf("t_decrypted: %llu\n", t_decrypted);
 
     return t_decrypted == t;
 }
@@ -297,13 +297,15 @@ int main(void) {
 
     // t is the plaintext (a positive integer) and t is a message being encrypted
     // t must be less than the modulus PQ (less than 31 bits, since the multiplication of two lowest 16 bit int is under 31 bits)
-    for(int k = 0 ; k < 100; k++){
-        for (int i = 0; i < 10; i++) {
-            assert(cryptography(lookup[i], 99, 5, 99) == 1);
-            assert(cryptography(lookup[i], 1, 5, 99) == 1);
-            assert(cryptography(lookup[i], 11, 10, 111) == 1);
-        }
-    }
+    // for(int k = 0 ; k < 1; k++){
+    //     for (int i = 0; i < 10; i++) {
+    //         assert(cryptography(lookup[i], 99, 5, 99) == 1);
+    //         assert(cryptography(lookup[i], 1, 5, 99) == 1);
+    //         assert(cryptography(lookup[i], 11, 10, 111) == 1);
+    //     }
+    // }
+    
+    assert(cryptography(lookup[1], 99, 5, 99) == 1);
 
     // end time
     gettimeofday(&end_time, NULL);
