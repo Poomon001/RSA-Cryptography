@@ -7,9 +7,9 @@
 
 uint64_t montgomery_modular_multiplication(register uint64_t x, register uint64_t y, register uint64_t M);
 uint64_t modular_exponentiation(register uint64_t p, register uint64_t e, register uint64_t m);
-int32_t compute_x(register uint32_t phi, register uint16_t e);
-int mod_inverse(register int e, register int phi);
-uint16_t get_16bit_prime(register int bits, register int seed);
+int32_t compute_x(uint32_t phi, uint16_t e);
+int mod_inverse(int e, int phi);
+uint16_t get_16bit_prime(int bits, int seed);
 void gcd_extended(register int e, register int phi, int* restrict x, int* restrict y);
 
 /**
@@ -41,7 +41,7 @@ void gcd_extended(register int e, register int phi, int* restrict x, int* restri
  *           : int phi - (p - 1)(q - 1)
  * Returns: int - mod_inverse of E mod PHI
  * */
-int mod_inverse(register int e, register int phi) {
+int mod_inverse(int e, int phi) {
     int x, y;
     gcd_extended(e, phi, &x, &y);
 
@@ -56,7 +56,7 @@ int mod_inverse(register int e, register int phi) {
  * Returns: int - x for the equation
  * */
 
-int32_t compute_x(register uint32_t phi, register uint16_t e) {
+int32_t compute_x(uint32_t phi, uint16_t e) {
     // Compute k such that k * e % phi = 1
     uint32_t k = mod_inverse(e, phi);
 
@@ -74,7 +74,7 @@ int32_t compute_x(register uint32_t phi, register uint16_t e) {
  *           : int seed - the seed for the random number generator
  * Returns: uint16_t - the generated prime number
  * */
-uint16_t get_16bit_prime(register int bits, register int seed) {
+uint16_t get_16bit_prime(int bits, int seed) {
     gmp_randstate_t state;
     mpz_t prime;
 
@@ -187,10 +187,10 @@ uint64_t modular_exponentiation(register uint64_t p, register uint64_t e, regist
  * */
 
 uint64_t montgomery_modular_multiplication(register uint64_t x, register uint64_t y, register uint64_t M) {
-    uint64_t m = M;
-    uint64_t t = 0;
-    uint64_t y_and_1 = y & 1; // precompute y & 1
-    uint64_t n, xy, nm, x_and_1;
+    register uint64_t m = M;
+    register uint64_t t = 0;
+    register uint64_t y_and_1 = y & 1; // precompute y & 1
+    register uint64_t n, xy, nm, x_and_1;
 
 
     // Loop through the number of m bits in pq
