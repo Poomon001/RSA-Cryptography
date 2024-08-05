@@ -282,7 +282,7 @@ int cryptography(uint32_t t, int seed_p, int seed_q, int seed_e) {
     // decryption of the ciphertext C, T = C^D mod PQ
     uint64_t t_decrypted = modular_exponentiation(c_encrypted, d, pq);
 
-    printf("t_decrypted: %llu\n", t_decrypted);
+//    printf("t_decrypted: %llu\n", t_decrypted);
 
     return t_decrypted == t;
 }
