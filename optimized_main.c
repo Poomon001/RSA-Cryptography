@@ -297,7 +297,7 @@ int main(void) {
 
     // t is the plaintext (a positive integer) and t is a message being encrypted
     // t must be less than the modulus PQ (less than 31 bits, since the multiplication of two lowest 16 bit int is under 31 bits)
-    for(int k = 0 ; k < 1; k++){
+    for(int k = 0 ; k < 100; k++){
         for (int i = 0; i < 10; i++) {
             assert(cryptography(lookup[i], 99, 5, 99) == 1);
             assert(cryptography(lookup[i], 1, 5, 99) == 1);
