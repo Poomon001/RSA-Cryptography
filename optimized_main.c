@@ -199,7 +199,7 @@ uint64_t montgomery_modular_multiplication(register uint64_t x, register uint64_
     while (m > 2) {
         // First iteration
         n = ((t & 1)) ^ ((x & 1) & y_and_1);
-        // replace with multiplications with predicate operations and 2's complement
+        // replace multiplications with predicate operations and 2's complement
         x_and_1 = (x & 1);
         xy = -x_and_1 & y;
         nm = (-n & M);
@@ -208,7 +208,7 @@ uint64_t montgomery_modular_multiplication(register uint64_t x, register uint64_
 
         // Second iteration (unrolled)
         n = ((t & 1)) ^ ((x & 1) & y_and_1);
-        // replace with multiplications with predicate operations and 2's complement
+        // replace multiplications with predicate operations and 2's complement
         x_and_1 = (x & 1);
         xy = -x_and_1 & y;
         nm = (-n & M);
@@ -217,7 +217,7 @@ uint64_t montgomery_modular_multiplication(register uint64_t x, register uint64_
 
         // third iteration (unrolled)
         n = ((t & 1)) ^ ((x & 1) & y_and_1);
-        // replace with multiplications with predicate operations and 2's complement
+        // replace multiplications with predicate operations and 2's complement
         x_and_1 = (x & 1);
         xy = -x_and_1 & y;
         nm = (-n & M);
@@ -231,7 +231,7 @@ uint64_t montgomery_modular_multiplication(register uint64_t x, register uint64_
     // remaining iterations (1 to 2)
     while (m > 0) {
         n = ((t & 1)) ^ ((x & 1) & y_and_1);
-        // replace with nm multiplication with predicate operation and 2' complement
+        // replace multiplications with predicate operation and 2's complement
         x_and_1 = (x & 1);
         xy = -x_and_1 & y;
         nm = (-n & M);
