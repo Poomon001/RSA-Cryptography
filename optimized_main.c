@@ -274,23 +274,22 @@ int main(void) {
     // start time
     gettimeofday(&start_time, NULL);
 
-    /* For runtime test:
+    /*  // For runtime test:
         // const int lookup[10] = {1,2, 10,999,1000,5678,98765,666666,9876543,10000000};
 
-        // t is the plaintext (a positive integer) and t is a message being encrypted
-        // t must be less than the modulus PQ (less than 31 bits, since the multiplication of two lowest 16 bit int is under 31 bits)
-        // for(int k = 0 ; k < 1; k++){
+        // //t is the plaintext (a positive integer) and t is a message being encrypted
+        // //t must be less than the modulus PQ (less than 31 bits, since the multiplication of two lowest 16 bit int is under 31 bits)
+        // for(int k = 0 ; k < 100; k++){
         //     for (int i = 0; i < 10; i++) {
         //         assert(cryptography(lookup[i], 99, 5, 99) == 1);
         //         assert(cryptography(lookup[i], 1, 5, 99) == 1);
         //         assert(cryptography(lookup[i], 11, 10, 111) == 1);
         //     }
         // }
-        // assert(cryptography(lookup[i], 99, 5, 99) == 1);
     */
 
-    // number of instructions test
 
+    // number of instructions test
     assert(cryptography(10000000, 99, 5, 99) == 1);
 
     // end time
