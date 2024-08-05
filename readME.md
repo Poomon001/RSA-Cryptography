@@ -2,8 +2,8 @@
 RSA Cryptography Optimization is a project that aims to optimize the RSA encryption and decryption process. The optimization includes the use of Montgomery Modular Multiplication and Modular Exponentiation Algorithms to reduce the multiplication and exponentiation operations' strength. In addition to algorithms, this project applies different optimization techniques including loop unrolling, software pipelining, grafting, operator strength reduction, predicate execution, look up table, restrict-qualified pointers, register spilling, constant propagation, and dead code elimination to reduce the number of instructions.
 
 ## Results
-We successfully reduce the number of instruction by over X instruction (Y % of the total instruction). The optimized code is Z% faster than the original code.
-The optimized version also increases the capability of a plain text size by 29 bits. Note we use 64-bits system as a benchmark, so we can further increase the plain text size by optimizing the code.  
+We successfully reduce the number of instruction by 178,955 instructions (approximately 45.75 % of the total instruction). The optimized code is Z% faster than the original code.
+The optimized version also increases the capability of a plain text size by 30 bits.  
 
 ## Setup QEMU
 1. Download QEMU for Windows 64 bit from https://qemu.weilnetz.de/w64
@@ -31,3 +31,9 @@ initramfs-4.18.16-300.fc29.armv7hl.img -append
 ## Compile and Run Application
 1. Compile a .c file via a ```  gcc -mfpu=neon -march=armv7-a -mtune=cortex-a9 main.c -lgmp -o main ``` command
 2. Run an executable file via ``` ./main ```
+
+## Determine the numbers of instructions of different functions
+1. Install Valgrind: ```sudo yum -y install valgrind```
+2. Compile the executable file
+3. Run ```valgrind --tool=callgrind executable_file```, this will generate a callgrind.out.* file which is required in step 4.
+4. Run ```callgrind_annotate callgrind.out.* | grep function_name```
