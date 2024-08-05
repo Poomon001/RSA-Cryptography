@@ -284,7 +284,7 @@ int main(void) {
     uint32_t t = 1845588466;
 
     uint64_t pq = p * q;
-    
+
     // branch elimination: minor performance improvements, but make the code less readable
     (pq) < t && (printf("Our plain text t must be less than p * q\n"), exit(-1), 0);
 
