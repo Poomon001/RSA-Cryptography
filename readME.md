@@ -2,7 +2,8 @@
 RSA Cryptography Optimization is a project that aims to optimize the RSA encryption and decryption process. The optimization includes the use of Montgomery Modular Multiplication and Modular Exponentiation Algorithms to reduce the multiplication and exponentiation operations' strength. In addition to algorithms, this project applies different optimization techniques including loop unrolling, software pipelining, grafting, operator strength reduction, predicate execution, look up table, restrict-qualified pointers, register spilling, constant propagation, and dead code elimination to reduce the number of instructions.
 
 ## Results
-- Since modular_exponentiation function is the one that calls the montgomery_modular_multiplication, the optimization was focused towards modular_exponentiation function in terms of number of instructions. The number of instructions was reduced in modular_exponentiation function by 150,539 instructions between main.c and optimized_no_lookup_main.c files (improvement of 80.6 % per one cryptography process). Similarly, the number of instructions was reduced in modular_exponentiation function by 139,011 instructions between main.c and optimized_main.c files (improvement of 74.4 % per one cryptography process).
+- The number of instructions was reduced in modular_exponentiation function by 150,539 instructions between main.c and optimized_no_lookup_main.c files (improvement of 80.6 % per one cryptography process).
+- The number of instructions was reduced in modular_exponentiation function by 139,011 instructions between main.c and optimized_main.c files (improvement of 74.4 % per one cryptography process).
 - The optimized code has 98.4 percent improvement (61 times) faster than the original code in stress testing on 3000 cryptography processes.
 - The optimized version also increases the capability of a plain text size by 29 bits.  
 
