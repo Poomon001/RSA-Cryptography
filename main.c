@@ -205,19 +205,14 @@ uint64_t montgomery_modular_multiplication(uint64_t x, uint64_t y, uint64_t M) {
     return t;
 }
 
-int main(void) {
-    struct timeval start_time, end_time;
-
-    // start time
-    gettimeofday(&start_time, NULL);
-
+int cryptography(uint32_t t, int seed_p, int seed_q, int seed_e) {
     // P and Q are two large prime numbers
     // NOTE: The max bits must be 16 bits or less because when p and q are 16 bits, it produces a 32 bit pq value
     // When pq is 32 bits, the r value is 2^32 which is larger than 32 bits
     // When r * r is calculated, it becomes larger than 64 bits
     // So when p and q are larger than 16 bits, it results in r * r being larger than 64 bits
-    const uint16_t p = get_16bit_prime(16, 99);
-    const uint16_t q = get_16bit_prime(16, 5);
+    const uint16_t p = get_16bit_prime(16, seed_p);
+    const uint16_t q = get_16bit_prime(16, seed_q);
 
     //(P - 1) * (Q - 1) is an even number
     const uint32_t phi = (p - 1) * (q - 1);
@@ -227,7 +222,7 @@ int main(void) {
     //E and (P - 1)*(Q - 1) are relatively prime (meaning they have no prime factors in common)
     uint16_t e;
     do {
-        e = get_16bit_prime(16, 99);
+        e = get_16bit_prime(16, seed_e);
     } while (phi % e == 0);
 
     uint32_t x = compute_x(phi, e);
@@ -240,7 +235,6 @@ int main(void) {
     // t must be less than the modulus PQ
     // check that t is less than p * q
     // 1845588466
-    uint32_t t = 1845588466;
     if ((p * q) < t){
         printf("Our plain text t must be less than p * q\n");
         exit(-1);
@@ -256,6 +250,23 @@ int main(void) {
     uint64_t t_decrypted = modular_exponentiation(c_encrypted, d, pq);
 
     printf("t_decrypted: %llu\n", t_decrypted);
+
+    return t_decrypted == t;
+}
+
+int main(void) {
+    struct timeval start_time, end_time;
+
+    // start time
+    gettimeofday(&start_time, NULL);
+
+    cryptography(1845588466, 99, 5, 99);
+    printf("\n");
+    cryptography(1, 99, 5, 99);
+    printf("\n");
+    cryptography(1890, 99, 5, 99);
+    printf("\n");
+    cryptography(18455884, 99, 5, 99);
 
     // end time
     gettimeofday(&end_time, NULL);
