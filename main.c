@@ -68,11 +68,10 @@ int32_t compute_x(uint32_t phi, uint16_t e) {
 }
 
 /**
- * Generates a random prime number with a specified number of bits using the GMP library
- * Parameters: int bits - the number of bits in the prime number
- *           : int seed - the seed for the random number generator
- * Returns: uint16_t - the generated prime number
- * */
+* Generates a random prime number with a specified number of bits using the GMP library
+* Parameters: int seed - the seed for the random number generator
+* Returns: uint16_t - the generated prime number
+* */
 uint16_t get_16bit_prime(int seed) {
     gmp_randstate_t state;
     mpz_t prime;
@@ -103,9 +102,9 @@ uint16_t get_16bit_prime(int seed) {
  * inefficient with exponential operator
  * Can only support 1 bit input with limited range of t values
  * **/
-int32_t bruteforce_rsa_cryptography(int32_t t, int32_t e, int32_t pq) {
-    return (int32_t)pow(t, e) % pq;
-}
+// int32_t bruteforce_rsa_cryptography(int32_t t, int32_t e, int32_t pq) {
+//     return (int32_t)pow(t, e) % pq;
+// }
 
 /** With modular_exponentiation and montgomery_modular_multiplication: **/
 /**
@@ -224,18 +223,18 @@ int cryptography(uint32_t t, int seed_p, int seed_q, int seed_e) {
     }
 
     // encryption of plaintext T, C = T^E mod PQ
-    // uint64_t c_encrypted = modular_exponentiation(t, e, pq);
+    uint64_t c_encrypted = modular_exponentiation(t, e, pq);
 
     // brute force approach for encryption
-    uint64_t c_encrypted = bruteforce_rsa_cryptography(t, e, pq);
+    // uint64_t c_encrypted = bruteforce_rsa_cryptography(t, e, pq);
 
     // printf("c_encrypted: %llu\n", c_encrypted);
 
     // decryption of the ciphertext C, T = C^D mod PQ
-    // uint64_t t_decrypted = modular_exponentiation(c_encrypted, d, pq);
+    uint64_t t_decrypted = modular_exponentiation(c_encrypted, d, pq);
 
     // brute force approach for decryption
-    uint64_t t_decrypted = bruteforce_rsa_cryptography(c_encrypted, d, pq);
+    // uint64_t t_decrypted = bruteforce_rsa_cryptography(c_encrypted, d, pq);
 
     // printf("t_decrypted: %llu\n", t_decrypted);
 
@@ -248,23 +247,26 @@ int main(void) {
     // start time
     gettimeofday(&start_time, NULL);
 
-    // const int lookup[10] = {1,2,10,999,1000,5678,98765,666666,9876543,10000000};
+    /* For runtime test:
+        // const int lookup[10] = {1,2,10,999,1000,5678,98765,666666,9876543,10000000};
 
-    // lookup table for brute force approach specifically
-    const int lookup[10] = {1,1,1,1,1,1,1,1,1,1};
+        // lookup table for brute force approach specifically
+        // const int lookup[10] = {1,1,1,1,1,1,1,1,1,1};
 
-    // t is the plaintext (a positive integer) and t is a message being encrypted
-    // t must be less than the modulus PQ (less than 31 bits, since the multiplication of two lowest 16 bit int is under 31 bits)
-    // 
-    // for(int k = 0 ; k < 1; k++){
-    //     for (int i = 0; i < 10; i++) {
-    //         assert(cryptography(lookup[i], 99, 5, 99) == 1);
-    //         assert(cryptography(lookup[i], 1, 5, 99) == 1);
-    //         assert(cryptography(lookup[i], 11, 10, 111) == 1);
-    //     }
-    // }
+        // t is the plaintext (a positive integer) and t is a message being encrypted
+        // t must be less than the modulus PQ (less than 31 bits, since the multiplication of two lowest 16 bit int is under 31 bits)
+        // 
+        // for(int k = 0 ; k < 1; k++){
+        //     for (int i = 0; i < 10; i++) {
+        //         assert(cryptography(lookup[i], 99, 5, 99) == 1);
+        //         assert(cryptography(lookup[i], 1, 5, 99) == 1);
+        //         assert(cryptography(lookup[i], 11, 10, 111) == 1);
+        //     }
+        // }
+    */
 
-    assert(cryptography(lookup[1], 99, 5, 99) == 1);
+    // number of instructions test
+    assert(cryptography(10000000, 99, 5, 99) == 1);
 
 
     // end time
