@@ -3,8 +3,8 @@ RSA Cryptography Optimization is a project that aims to optimize the RSA encrypt
 
 ## Results
 - We successfully reduce the number of instruction by 178,955 instructions (approximately 45.75 % of the total instruction). 
-- The optimized code is  faster than the original code.
-- The optimized version also increases the capability of a plain text size by 30 bits.  
+- The optimized code has 98.4 percent improvement (61 times) faster than the original code.
+- The optimized version also increases the capability of a plain text size by 29 bits.  
 
 ## Setup QEMU
 1. Download QEMU for Windows 64 bit from https://qemu.weilnetz.de/w64
