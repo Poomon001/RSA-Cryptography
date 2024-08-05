@@ -1,9 +1,9 @@
 # RSA Cryptography Optimization
-RSA Cryptography Optimization is a project that aims to optimize the RSA encryption and decryption process. The optimization includes the use of the GMP library, Montgomery Modular Multiplication Algorithm, and Modular Exponentiation Algorithm to reduce the multiplication and exponentiation operations' strength. In addition to algorithms, this project applies different optimization techniques including loop unrolling, software pipelining, grafting, operator strength reduction, predicate execution, restrict-qualified pointers, register spilling, constant propagation, and dead code elimination to reduce the number of instructions.
+RSA Cryptography Optimization is a project that aims to optimize the RSA encryption and decryption process. The optimization includes the use of Montgomery Modular Multiplication and Modular Exponentiation Algorithms to reduce the multiplication and exponentiation operations' strength. In addition to algorithms, this project applies different optimization techniques including loop unrolling, software pipelining, grafting, operator strength reduction, predicate execution, look up table, restrict-qualified pointers, register spilling, constant propagation, and dead code elimination to reduce the number of instructions.
 
 ## Results
 We successfully reduce the number of instruction by over X instruction (Y % of the total instruction). The optimized code is Z% faster than the original code.
-The optimized version also increases the capability of a plain text size by 30 bits.  
+The optimized version also increases the capability of a plain text size by 29 bits. Note we use 64-bits system as a benchmark, so we can further increase the plain text size by optimizing the code.  
 
 ## Setup QEMU
 1. Download QEMU for Windows 64 bit from https://qemu.weilnetz.de/w64
