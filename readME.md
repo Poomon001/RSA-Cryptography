@@ -5,7 +5,7 @@ In addition to algorithms, this project applies different optimization technique
 predicate execution, restrict-qualified pointers, register spilling, constant propagation, and dead code elimination to reduce the number of instructions.
 
 ## Results
-We successfully reduce the number of instruction by over X instruction (Y % of the total instruction). The optimized code is Z% faster than the original code.
+We successfully reduce the number of instruction by 178,955 instructions (approximately 45.75 % of the total instruction). The optimized code is Z% faster than the original code.
 The optimized version also increases the capability of a plain text size by 30 bits.  
 
 ## Setup QEMU
