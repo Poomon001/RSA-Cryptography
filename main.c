@@ -194,10 +194,6 @@ uint64_t montgomery_modular_multiplication(uint64_t x, uint64_t y, uint64_t M) {
         m = m >> 1;
     }
 
-    if (t >= M) {
-        printf("Hello montgomery_modular_multiplication I am Harsh [t: %llu] \n", t);
-        t = t - M;
-    }
     return t;
 }
 
