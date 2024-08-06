@@ -153,6 +153,20 @@ uint64_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m){
     return z;
 }
 
+//uint64_t modular_exponentiation(uint64_t p, uint64_t e, uint64_t m){
+//    uint64_t z = 1;
+//    p = p % m; //to ensure that p does not become too large than 32 bits
+//    while(e > 0){
+//        if ((e & 1) == 1){
+//            z = (z * p) % m;
+//        }
+//
+//        e = e >> 1;
+//        p = (p * p) % m;
+//    }
+//    return (int32_t)z;
+//}
+
 /** Montgomery Modular Multiplication Algorithm **/
 /**
  * Computes the Montgomery Modular Multiplication of a number, an optimal solution to x * y * r^-1 mod m
@@ -180,9 +194,6 @@ uint64_t montgomery_modular_multiplication(uint64_t x, uint64_t y, uint64_t M) {
         m = m >> 1;
     }
 
-    if (t >= M) {
-        t = t - M;
-    }
     return t;
 }
 
