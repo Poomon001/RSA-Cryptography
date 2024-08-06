@@ -33,6 +33,7 @@ initramfs-4.18.16-300.fc29.armv7hl.img -append
 ## Compile and Run Application
 1. Compile a .c file via a ```  gcc -mfpu=neon -march=armv7-a -mtune=cortex-a9 main.c -lgmp -o main ``` command
 2. Run an executable file via ``` ./main ```
+3. Compile a .c file with -O3 flag ```  gcc -mfpu=neon -march=armv7-a -mtune=cortex-a9 main.c -lgmp -O3 -o main ```
 
 ## Determine the numbers of instructions of different functions
 1. Install Valgrind: ```sudo yum -y install valgrind```
