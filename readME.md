@@ -36,7 +36,11 @@ initramfs-4.18.16-300.fc29.armv7hl.img -append
 3. Compile a .c file with -O3 flag ```  gcc -mfpu=neon -march=armv7-a -mtune=cortex-a9 main.c -lgmp -O3 -o main ```
 
 ## Determine the numbers of instructions of different functions
-1. Install Valgrind: ```sudo yum -y install valgrind```
+1. Install Valgrind using ```sudo yum -y install valgrind``` command
 2. Compile the executable file
 3. Run ```valgrind --tool=callgrind executable_file```, this will generate a callgrind.out.* file which is required in step 4.
 4. Run ```callgrind_annotate callgrind.out.* | grep function_name```
+
+## Observe Assembly
+1. Compile a .c file with a ```gcc -S -O3 main.c``` command, but -O3 flag is optional
+2. Look at the assembly with ```less main.s``` command
